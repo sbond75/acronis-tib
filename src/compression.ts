@@ -8,7 +8,7 @@ const BUFFER_SIZE = 4096;
 
 
 
-function getInflaterErrorHandler(inflater: zlib.Inflate|zlib.InflateRaw): { promise: Promise<{}>; cleanup: () => void } {
+function getInflaterErrorHandler(inflater: zlib.Inflate|zlib.InflateRaw): { promise: Promise<unknown>; cleanup: () => void } {
 
 	let cleanup: (() => void)|undefined = undefined;
 

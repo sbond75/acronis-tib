@@ -3,6 +3,7 @@ import { Reader, FileReader } from './reader';
 
 
 const VOLUME_MAGIC = 0xA2B924CE;
+//const VOLUME_MAGIC = 0xCE24B9A2;
 
 
 export enum VolumeVersion {
@@ -72,7 +73,7 @@ export default abstract class Volume {
 	
 		let magic = headerBlock.readUInt32LE(0);
 		if(magic !== VOLUME_MAGIC) {
-			throw new Error('Wrong magic!');
+			throw new Error('Wrong magic!: ' + magic + ' ' + typeof(magic) + ' in ' + headerBlock);
 		}
 	
 		// Should be 24 00 01 00 for Mac
