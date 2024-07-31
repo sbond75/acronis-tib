@@ -16,8 +16,12 @@ Reversing Engineering TODOs:
 
 Usage
 -----
-TODO: Still a work in progress 
 
+1. Compile nodejs 10 from source (see [this commit's message](https://github.com/sbond75/acronis-tib/commit/40b597e69bc34e322a0f4240ad26d58392f2caf5) for more details) and install it
+2. `npm install` to get dependencies
+3. `npm run build` to compile the typescript
+4. `npm install`
+5. `node dist/index.js`, you can put any operations you want to do into this file
 
 Versions
 --------

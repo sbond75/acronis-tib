@@ -69,8 +69,10 @@ export default abstract class Volume {
 
 		reader.seek(0);
 
+		console.log("1");
 		let headerBlock = Buffer.from(await reader.readBytes(64));// < Just to be safe this is way more than the 36 bytes that the usual Mac header would take up
 	
+		console.log("2");
 		let magic = headerBlock.readUInt32LE(0);
 		if(magic !== VOLUME_MAGIC) {
 			throw new Error('Wrong magic!: ' + magic + ' ' + typeof(magic) + ' in ' + headerBlock);
@@ -78,6 +80,7 @@ export default abstract class Volume {
 	
 		// Should be 24 00 01 00 for Mac
 		let headerLength = headerBlock.readUInt16LE(4);
+		console.log("headerLength: " + headerLength);
 		let version = headerBlock.readUInt16LE(6); // < 01 is Mac, 00 is windows?
 
 		// I know that at offset 0x10 in the file, there are definately 4 random bytes created at the time of volume creation

@@ -2,6 +2,45 @@ import fs from 'fs-extra';
 import { ToArrayBuffer } from './utils';
 import search from './search';
 
+// https://stackoverflow.com/questions/12941083/execute-and-get-the-output-of-a-shell-command-in-node-js //
+const childProcess = require("child_process");
+
+/**
+ * @param {string} command A shell command to execute
+ * @return {Promise<string>} A promise that resolve to the output of the shell command, or an error
+ * @example const output = await execute("ls -alh");
+ */
+function execute(command: string): Promise<string> {
+  /**
+   * @param {Function} resolve A function that resolves the promise
+   * @param {Function} reject A function that fails the promise
+   * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise
+   */
+  return new Promise(function(resolve, reject) {
+    /**
+     * @param {Error} error An error triggered during the execution of the childProcess.exec command
+     * @param {string|Buffer} standardOutput The result of the shell command execution
+     * @param {string|Buffer} standardError The error resulting of the shell command execution
+     * @see https://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback
+     */
+    childProcess.exec(command, function(error: any, standardOutput: any, standardError: any) {
+      if (error) {
+        reject();
+
+        return;
+      }
+
+      if (standardError) {
+        reject(standardError);
+
+        return;
+      }
+
+      resolve(standardOutput);
+    });
+  });
+}
+// //
 
 export enum ReaderEndian {
 	LittleEndian = 1,
@@ -105,7 +144,6 @@ interface ReferenceCountedNumber {
 	nrefs: number;
 }
 
-
 // TODO: Mainly needs the fd to be reference counted and we need to implement endianness choice
 export class FileReader extends BufferBasedReader {
 
@@ -119,7 +157,26 @@ export class FileReader extends BufferBasedReader {
 	static async Create(filename: string) {
 		let fd = await fs.open(filename, 'r');
 		let stat = await fs.fstat(fd);
-		return new FileReader({ val: fd, nrefs: 1 }, 0, stat.size);
+		var statSize = 0;
+		if (stat.size == 0) {
+			// Based on ChatGPT 3.5 on https://chat.openai.com //
+		    	const { exec } = require('child_process');
+
+			// Replace /dev/loop0 with the path to your loop device
+			const loopDevice = filename;
+
+			let stdout = await execute(`blockdev --getsize64 ${loopDevice}`);
+			
+		  	const size = parseInt(stdout.trim(), 10);
+			console.log(`Size of ${loopDevice}: ${size} byte(s)`);
+			// //
+			
+			statSize = size;
+		}
+		else {
+			statSize = stat.size;
+		}
+		return new FileReader({ val: fd, nrefs: 1 }, 0, statSize);
 	}
 
 	private constructor(fd: ReferenceCountedNumber, start: number, end: number) {
@@ -150,6 +207,7 @@ export class FileReader extends BufferBasedReader {
 	}
 
 	async readBufferBytes(n : number): Promise<Buffer> {
+		console.log("FileReader.readBufferBytes: " + n + " at position " + this._pos + " with end " + this._end);
 		var buf = Buffer.allocUnsafe(n);
 		if(this._pos + n > this._end) {
 			throw new Error('Overrunning file');
